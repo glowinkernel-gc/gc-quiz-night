@@ -3,18 +3,29 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Quiz Battle</title>
+  <title>Golomt Capital Quiz Lib</title>
+  <meta name="theme-color" content="#0a1525">
   <link rel="stylesheet" href="css/style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
   <div id="app">
+    <header class="brand-header" aria-label="Golomt Capital">
+      <div class="brand-lockup">
+        <span class="brand-name">Golomt Capital</span>
+        <span class="brand-tagline">Delivering diversity</span>
+      </div>
+    </header>
+
     <!-- Home: type picker -->
     <section id="view-home" class="view active">
       <div class="hero">
-        <h1 class="logo">Quiz Battle</h1>
-        <p class="subtitle">Төрөл сонгоод quiz үүсгэж, timer-тай тоглуул</p>
+        <div class="brand-accent" aria-hidden="true"></div>
+        <p class="hero-eyebrow">Delivering Diversity</p>
+        <h1 class="hero-title">Golomt Capital Quiz Lib</h1>
+        <p class="subtitle">Бүх багууддаа амжилт хүсье</p>
         <div id="type-grid" class="type-grid"></div>
       </div>
     </section>
@@ -22,18 +33,18 @@
     <!-- Type hub: quizzes of one type -->
     <section id="view-type-hub" class="view">
       <header class="top-bar">
-        <button class="btn btn-ghost" data-action="home">← Буцах</button>
+        <button class="btn btn-ghost" data-action="home">Буцах</button>
         <h2 id="hub-title"></h2>
-        <button class="btn btn-primary" id="btn-create-in-type">+ Шинэ quiz</button>
+        <button class="btn btn-primary" id="btn-create-in-type">Шинэ quiz</button>
       </header>
       <div id="type-quiz-list" class="quiz-list"></div>
-      <p id="empty-type-hub" class="empty-msg hidden">Энэ төрлийн quiz байхгүй. Шинэ quiz үүсгээрэй!</p>
+      <p id="empty-type-hub" class="empty-msg hidden">Энэ төрлийн quiz байхгүй байна. Та шинээр quiz үүсгээрэй!</p>
     </section>
 
     <!-- Creator -->
     <section id="view-creator" class="view">
       <header class="top-bar">
-        <button class="btn btn-ghost" id="btn-back-from-creator">← Буцах</button>
+        <button class="btn btn-ghost" id="btn-back-from-creator">Буцах</button>
         <h2 id="creator-title"></h2>
         <button class="btn btn-primary" id="btn-save-quiz">Хадгалах</button>
       </header>
@@ -43,7 +54,7 @@
           <input type="text" id="quiz-title" placeholder="Жишээ: Marvel кино quiz" maxlength="80">
         </div>
         <div id="questions-container"></div>
-        <button class="btn btn-outline" id="btn-add-question">+ Асуулт нэмэх</button>
+        <button class="btn btn-outline" id="btn-add-question">Асуулт нэмэх</button>
       </div>
     </section>
 
@@ -53,8 +64,8 @@
         <span id="play-type-badge" class="type-badge type-badge-lg"></span>
         <h2 id="play-quiz-title"></h2>
         <p id="play-quiz-info"></p>
-        <button class="btn btn-primary btn-lg" id="btn-start-play">▶ Эхлэх</button>
-        <button class="btn btn-ghost" id="btn-back-from-player">← Буцах</button>
+        <button class="btn btn-primary btn-lg" id="btn-start-play">Эхлэх</button>
+        <button class="btn btn-ghost" id="btn-back-from-player">Буцах</button>
       </div>
 
       <div id="player-game" class="player-game hidden">
@@ -64,7 +75,6 @@
             <div id="timer-bar" class="timer-bar"></div>
             <span id="timer-text" class="timer-text">10</span>
           </div>
-          <button class="btn btn-pause" id="btn-pause" title="Pause">⏸</button>
         </div>
 
         <div id="question-area" class="question-area">
@@ -72,34 +82,37 @@
           <h2 id="question-text" class="question-text"></h2>
           <blockquote id="question-quote" class="question-quote hidden"></blockquote>
           <img id="question-image" class="question-image hidden" alt="">
+          <div id="poster-fx" class="poster-fx hidden" aria-hidden="true"></div>
         </div>
 
         <div id="answer-reveal" class="answer-reveal-overlay hidden">
           <div class="answer-reveal-backdrop"></div>
           <div class="answer-reveal-content">
-            <p class="reveal-label">✦ ЗӨВ ХАРИУЛТ ✦</p>
+            <p class="reveal-label">Зөв хариулт</p>
             <p id="reveal-answer" class="reveal-answer"></p>
             <p id="reveal-explanation" class="reveal-explanation"></p>
           </div>
         </div>
 
         <div class="player-controls">
-          <button class="btn btn-nav hidden" id="btn-prev" title="Өмнөх">⬅️</button>
-          <button class="btn btn-nav hidden" id="btn-next" title="Дараагийн">➡️</button>
-          <button class="btn btn-primary hidden" id="btn-finish">✓ Дуусгах</button>
+          <button class="btn btn-pause hidden" id="btn-pause" title="Түр зогсоох">Түр зогсоох</button>
+          <button class="btn btn-nav hidden" id="btn-prev" title="Өмнөх" aria-label="Өмнөх">‹</button>
+          <button class="btn btn-nav hidden" id="btn-next" title="Дараагийн" aria-label="Дараагийн">›</button>
+          <button class="btn btn-primary hidden" id="btn-finish">Дуусгах</button>
         </div>
       </div>
 
       <div id="player-done" class="player-done hidden">
-        <div class="done-icon">🎉</div>
-        <h2>Quiz дууслаа!</h2>
+        <h2>Quiz дууслаа</h2>
         <p id="done-summary"></p>
         <button class="btn btn-primary btn-lg" id="btn-back-done">Quiz-үүд рүү буцах</button>
-        <button class="btn btn-secondary" id="btn-replay">↺ Дахин тоглуулах</button>
+        <button class="btn btn-secondary" id="btn-replay">Дахин тоглуулах</button>
       </div>
     </section>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
   <script src="js/db.js"></script>
   <script src="js/app.js"></script>
 </body>

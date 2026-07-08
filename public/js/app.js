@@ -2,38 +2,53 @@ const GUEST_KEY = 'quiz-battle-guest';
 
 const QUIZ_TYPES = {
   'movie-poster': {
-    label: 'Кино Poster',
+    label: 'Кино таавар',
     icon: '🎬',
-    desc: 'Poster зураг оруулаад кino нэрийг taах',
+    desc: 'Киног poster зургаар таах',
     color: '#e94560',
-    defaultQuestion: 'Энэ poster-ийн кино юу вэ?',
+    defaultQuestion: 'Энэ ямар киноны постер вэ?',
+  },
+  'smoke-reveal': {
+    label: 'Жүжигчин, дуучид',
+    icon: '💨',
+    desc: 'Бүрсгэр дүрсээс түрүүлж таах',
+    color: '#ff7675',
+    defaultQuestion: 'Зурган дээрх дуучин хэн бэ?',
+    legacyTypes: ['blur-poster'],
   },
   music: {
-    label: 'Music Quiz',
+    label: 'Аяыг таах',
     icon: '🎵',
-    desc: 'Дуу сонсоод нэрийг taах',
+    desc: 'Дууны аяыг сонсоод нэрийг таах',
     color: '#1368ce',
     defaultQuestion: 'Энэ дууны нэр юу вэ?',
   },
+  'reverse-audio': {
+    label: 'Урвуу таавар',
+    icon: '🔁',
+    desc: 'Урвуу болгосон дууг таана',
+    color: '#00b894',
+    defaultQuestion: 'Урвуу дууны нэр юу вэ?',
+  },
   'quote-video': {
-    label: 'Quote Quiz with Video',
+    label: 'Ишлэлт таавар',
     icon: '🎥',
-    desc: 'Ишлэл + видео бичлэг, кино taах',
+    desc: 'Ишлэлийг уншаад киноны нэрийг таана',
     color: '#ffa502',
-    defaultQuestion: 'Энэ ишлэл аль киноос вэ?',
+    defaultQuestion: 'Энэ ишлэл аль киноных вэ?',
     legacyTypes: ['quote'],
   },
   'emoji-movie': {
     label: 'Киног эможигоор таах',
     icon: '😎',
-    desc: 'Эможи оруулаад кino нэрийг taах',
+    desc: 'Эможи дээрх илэрхийлэгдсэн утгаар киног таана',
     color: '#9b59b6',
-    defaultQuestion: 'Эможигоор илэрхийлсэн кино юу вэ?',
+    defaultQuestion: 'Эможигоор илэрхийлсэн киноны нэр юу вэ?',
   },
   'text-fill': {
-    label: 'Text Fill',
+    label: 'Дууны мөр нөхөх',
     icon: '✏️',
-    desc: 'Хоосон бөглөх асуулт',
+    desc: 'Дууны үгний дутуу үлдсэн хэсгийг гүйцээнэ',
     color: '#26890c',
     defaultQuestion: '',
   },
@@ -53,6 +68,13 @@ function getTypeInfo(categoryType) {
   return { label: categoryType, icon: '❓' };
 }
 
+function normalizeType(type) {
+  if (type === 'quote') return 'quote-video';
+  if (type === 'blur-poster') return 'smoke-reveal';
+  if (type === 'zoom-poster' || type === 'tv-signal' || type === 'color-splash') return 'movie-poster';
+  return type;
+}
+
 let state = {
   view: 'home',
   currentType: null,
@@ -66,6 +88,9 @@ let state = {
   timerTotal: 0,
   timerOnDone: null,
   mediaCache: {},
+  audioCtx: null,
+  reverseSource: null,
+  currentQuestion: null,
 };
 
 function uid() {
@@ -101,8 +126,11 @@ function escAttr(str) {
 
 function renderHome() {
   const grid = document.getElementById('type-grid');
-  grid.innerHTML = Object.entries(QUIZ_TYPES).map(([key, t]) => `
-    <button class="type-card" data-type="${key}" style="--type-color:${t.color}">
+  const entries = Object.entries(QUIZ_TYPES)
+    .filter(([key]) => key !== 'quote')
+    .map(([key, t]) => [normalizeType(key), t]);
+  grid.innerHTML = entries.map(([key, t]) => `
+    <button class="type-card" data-type="${key}">
       <span class="type-card-icon">${t.icon}</span>
       <span class="type-card-label">${t.label}</span>
       <span class="type-card-desc">${t.desc}</span>
@@ -116,12 +144,13 @@ function renderHome() {
 // ── Type Hub ─────────────────────────────────────────────
 
 async function openTypeHub(type) {
-  state.currentType = type;
-  const info = QUIZ_TYPES[type];
-  document.getElementById('hub-title').textContent = info.icon + ' ' + info.label;
+  const normalizedType = normalizeType(type);
+  state.currentType = normalizedType;
+  const info = QUIZ_TYPES[normalizedType];
+  document.getElementById('hub-title').textContent = info.label;
 
   const all = await getAllQuizzes();
-  const quizzes = all.filter(q => matchesCategoryType(q, type));
+  const quizzes = all.filter(q => matchesCategoryType(q, normalizedType));
   const list = document.getElementById('type-quiz-list');
   const empty = document.getElementById('empty-type-hub');
   list.innerHTML = '';
@@ -139,9 +168,9 @@ async function openTypeHub(type) {
           <p>${q.questions.length} асуулт · ${esc(q.author || 'Guest')}</p>
         </div>
         <div class="quiz-card-actions">
-          <button class="btn btn-primary" data-play="${q.id}">▶ Тоглуулах</button>
-          <button class="btn btn-secondary" data-edit="${q.id}">✏️</button>
-          <button class="btn btn-danger" data-delete="${q.id}">✕</button>
+          <button class="btn btn-primary" data-play="${q.id}">Тоглуулах</button>
+          <button class="btn btn-secondary btn-icon" data-edit="${q.id}" title="Засах" aria-label="Засах">✎</button>
+          <button class="btn btn-danger btn-icon" data-delete="${q.id}" title="Устгах" aria-label="Устгах">×</button>
         </div>`;
       list.appendChild(card);
     });
@@ -191,8 +220,6 @@ async function buildQuestionCard(data, index, type) {
   const card = document.createElement('div');
   card.className = 'q-card';
   card.dataset.index = index;
-  card.style.borderLeftColor = QUIZ_TYPES[type].color;
-
   let imagePreview = '';
   if (data?.imageId) {
     const src = await resolveMedia(data.imageId);
@@ -236,9 +263,12 @@ async function buildQuestionCard(data, index, type) {
 
   let typeFields = '';
 
-  if (type === 'movie-poster') {
+  if (
+    type === 'movie-poster' ||
+    type === 'smoke-reveal'
+  ) {
     typeFields = `
-      <p class="type-hint">Poster зураг оруулаад, зөв кино нэрийг "Зөв хариулт" хэсэгт бичнэ</p>
+      <p class="type-hint">Poster зураг оруулаад, киноныхоо зөв нэрийг "Зөв хариулт" хэсэгт бичнэ үү!</p>
       <div class="form-group">
         <label>Poster зураг *</label>
         <input type="file" class="q-image-file" accept="image/*">
@@ -246,11 +276,11 @@ async function buildQuestionCard(data, index, type) {
       </div>
       <div class="form-group">
         <label>Асуулт (заавал биш)</label>
-        <input type="text" class="q-question" value="${escAttr(data?.question || QUIZ_TYPES[type].defaultQuestion)}" placeholder="${QUIZ_TYPES[type].defaultQuestion}">
+        <textarea class="q-question" rows="2" placeholder="${QUIZ_TYPES[type].defaultQuestion}">${esc(data?.question || QUIZ_TYPES[type].defaultQuestion)}</textarea>
       </div>`;
   } else if (type === 'music') {
     typeFields = `
-      <p class="type-hint">Дууны файл оруулаад, зөв дууны нэрийг бичнэ</p>
+      <p class="type-hint">Дууны файл хавсаргаад, дууныхаа зөв нэрийг бичнэ үү!</p>
       <div class="form-group">
         <label>Audio файл *</label>
         <input type="file" class="q-audio-file" accept="audio/*">
@@ -258,11 +288,23 @@ async function buildQuestionCard(data, index, type) {
       </div>
       <div class="form-group">
         <label>Асуулт (заавал биш)</label>
-        <input type="text" class="q-question" value="${escAttr(data?.question || QUIZ_TYPES[type].defaultQuestion)}" placeholder="${QUIZ_TYPES[type].defaultQuestion}">
+        <textarea class="q-question" rows="2" placeholder="${QUIZ_TYPES[type].defaultQuestion}">${esc(data?.question || QUIZ_TYPES[type].defaultQuestion)}</textarea>
+      </div>`;
+  } else if (type === 'reverse-audio') {
+    typeFields = `
+      <p class="type-hint">Audio файл оруулна. Тоглуулахад дуу урвуугаар явна.</p>
+      <div class="form-group">
+        <label>Audio файл *</label>
+        <input type="file" class="q-audio-file" accept="audio/*">
+        ${audioPreview}
+      </div>
+      <div class="form-group">
+        <label>Асуулт (заавал биш)</label>
+        <textarea class="q-question" rows="2" placeholder="${QUIZ_TYPES[type].defaultQuestion}">${esc(data?.question || QUIZ_TYPES[type].defaultQuestion)}</textarea>
       </div>`;
   } else if (type === 'quote-video') {
     typeFields = `
-      <p class="type-hint">Ишлэл бичээд, хэлж байгаа видео бичлэг оруулна</p>
+      <p class="type-hint">Ишлэл бичих, нэмэлтээр видео хавсаргаж болно</p>
       <div class="form-group">
         <label>Ишлэл / Quote *</label>
         <textarea class="q-quote" rows="3" placeholder="&quot;I'll be back&quot;">${esc(data?.quote || '')}</textarea>
@@ -274,25 +316,25 @@ async function buildQuestionCard(data, index, type) {
       </div>
       <div class="form-group">
         <label>Асуулт (заавал биш)</label>
-        <input type="text" class="q-question" value="${escAttr(data?.question || QUIZ_TYPES[type].defaultQuestion)}" placeholder="${QUIZ_TYPES[type].defaultQuestion}">
+        <textarea class="q-question" rows="2" placeholder="${QUIZ_TYPES[type].defaultQuestion}">${esc(data?.question || QUIZ_TYPES[type].defaultQuestion)}</textarea>
       </div>`;
   } else if (type === 'emoji-movie') {
     typeFields = `
-      <p class="type-hint">Киног илэрхийлсэн эможи оруулна (жишээ: 🦁👑🌍)</p>
+      <p class="type-hint">Киног илэрхийлсэн эможи оруулна уу! (жишээ: 🦁👑🌍)</p>
       <div class="form-group">
         <label>Эможи *</label>
         <input type="text" class="q-emojis" value="${escAttr(data?.emojis || '')}" placeholder="🦁👑🌍">
       </div>
       <div class="form-group">
         <label>Асуулт (заавал биш)</label>
-        <input type="text" class="q-question" value="${escAttr(data?.question || QUIZ_TYPES[type].defaultQuestion)}" placeholder="${QUIZ_TYPES[type].defaultQuestion}">
+        <textarea class="q-question" rows="2" placeholder="${QUIZ_TYPES[type].defaultQuestion}">${esc(data?.question || QUIZ_TYPES[type].defaultQuestion)}</textarea>
       </div>`;
   } else if (type === 'text-fill') {
     typeFields = `
-      <p class="type-hint">Асуултад <code>___</code> гэж бичвэл тоглох үед хоосон харагдана</p>
+      <p class="type-hint">Асуултад <code>___</code> гэж бичвэл эхлэх үед хоосон харагдана</p>
       <div class="form-group">
         <label>Асуулт *</label>
-        <input type="text" class="q-question" value="${escAttr(data?.question || '')}" placeholder="Монголын нийслэл ___ хот">
+        <textarea class="q-question" rows="2" placeholder="Hasta la vista ___ ">${esc(data?.question || '')}</textarea>
       </div>`;
   }
 
@@ -308,8 +350,8 @@ async function buildQuestionCard(data, index, type) {
     reindexQuestions();
   });
 
-  if (type === 'movie-poster') wireImageUpload(card);
-  if (type === 'music') wireAudioUpload(card);
+  if (type === 'movie-poster' || type === 'smoke-reveal') wireImageUpload(card);
+  if (type === 'music' || type === 'reverse-audio') wireAudioUpload(card);
   if (type === 'quote-video') wireVideoUpload(card);
 
   return card;
@@ -328,7 +370,7 @@ function wireImageUpload(card) {
       card.dataset.pendingImage = dataUrl;
       delete card.dataset.imageId;
     } catch (err) {
-      alert('Зураг ачаалахад алдаа: ' + err.message);
+      alert('Зураг ачааллахад алдаа: ' + err.message);
     }
   });
 }
@@ -418,7 +460,7 @@ async function collectQuestions(type) {
 
     const q = { type, answerText, question, timeLimit, explanation };
 
-    if (type === 'movie-poster') {
+    if (type === 'movie-poster' || type === 'smoke-reveal') {
       if (card.dataset.pendingImage) {
         q.imageId = await saveMedia(card.dataset.pendingImage);
       } else if (card.dataset.imageId) {
@@ -429,7 +471,7 @@ async function collectQuestions(type) {
       }
     }
 
-    if (type === 'music') {
+    if (type === 'music' || type === 'reverse-audio') {
       if (card.dataset.pendingAudio) {
         q.audioId = await saveMedia(card.dataset.pendingAudio);
       } else if (card.dataset.audioId) {
@@ -468,11 +510,11 @@ async function collectQuestions(type) {
 
 async function handleSaveQuiz() {
   const title = document.getElementById('quiz-title').value.trim();
-  if (!title) { alert('Quiz-ийн нэрийг оруулна уу'); return; }
+  if (!title) { alert('Quiz-ийн нэрийг оруулна уу!'); return; }
 
   const type = state.currentType;
   const questions = await collectQuestions(type);
-  if (!questions || questions.length === 0) { alert('Хамгийн багадаа 1 асуулт нэмнэ үү'); return; }
+  if (!questions || questions.length === 0) { alert('Хамгийн багадаа 1 асуулт нэмнэ үү!'); return; }
 
   const author = getGuestName();
   const btn = document.getElementById('btn-save-quiz');
@@ -551,6 +593,7 @@ async function showQuestion() {
 
   const quiz = state.playingQuiz;
   const q = quiz.questions[state.playIndex];
+  state.currentQuestion = q;
 
   stopPlayMedia();
   document.getElementById('answer-reveal').classList.add('hidden');
@@ -581,10 +624,14 @@ async function showQuestion() {
     quoteEl.classList.remove('hidden');
   }
 
-  if (q.type === 'movie-poster' && q.imageId) {
+  const qType = normalizeType(q.type);
+  q.type = qType;
+
+  if ((q.type === 'movie-poster' || q.type === 'smoke-reveal') && q.imageId) {
     const imgEl = document.getElementById('question-image');
     imgEl.src = await resolveMedia(q.imageId);
     imgEl.classList.remove('hidden');
+    applyPosterVisualProgress(0);
   }
 
   if (q.type === 'music' && q.audioId) {
@@ -595,6 +642,16 @@ async function showQuestion() {
     audio.src = await resolveMedia(q.audioId);
     audio.autoplay = true;
     document.getElementById('question-area').appendChild(audio);
+  }
+
+  if (q.type === 'reverse-audio' && q.audioId) {
+    const src = await resolveMedia(q.audioId);
+    const hint = document.createElement('p');
+    hint.id = 'reverse-hint';
+    hint.className = 'type-hint';
+    hint.textContent = 'Урвуу аудиог тоглуулж байна…';
+    document.getElementById('question-area').appendChild(hint);
+    await playReverseAudio(src);
   }
 
   if ((q.type === 'quote-video' || q.type === 'quote') && q.videoId) {
@@ -608,6 +665,7 @@ async function showQuestion() {
   }
 
   document.getElementById('btn-pause').classList.remove('hidden');
+  showRuntimeNextButton();
   startTimer(q.timeLimit || 10, () => revealAnswer(q));
 }
 
@@ -616,12 +674,25 @@ function stopPlayMedia() {
   document.getElementById('play-audio')?.remove();
   const video = document.getElementById('play-video');
   if (video) { video.pause(); video.remove(); }
+  stopReversePlayback();
+  document.getElementById('reverse-hint')?.remove();
 }
 
 function hideNavButtons() {
   document.getElementById('btn-prev').classList.add('hidden');
   document.getElementById('btn-next').classList.add('hidden');
   document.getElementById('btn-finish').classList.add('hidden');
+}
+
+function showRuntimeNextButton() {
+  const isLast = state.playIndex >= state.playingQuiz.questions.length - 1;
+  if (isLast) {
+    document.getElementById('btn-finish').classList.remove('hidden');
+    document.getElementById('btn-next').classList.add('hidden');
+  } else {
+    document.getElementById('btn-next').classList.remove('hidden');
+    document.getElementById('btn-finish').classList.add('hidden');
+  }
 }
 
 function updateNavButtons() {
@@ -645,7 +716,7 @@ function startTimer(seconds, onDone) {
   state.timerPaused = false;
 
   updateTimerUI();
-  document.getElementById('btn-pause').textContent = '⏸';
+  document.getElementById('btn-pause').textContent = 'Түр зогсоох';
   document.getElementById('btn-pause').classList.remove('paused');
 
   state.timerId = setInterval(() => {
@@ -666,8 +737,10 @@ function updateTimerUI() {
   const bar = document.getElementById('timer-bar');
   const text = document.getElementById('timer-text');
   const pct = state.timerTotal > 0 ? (state.timerRemaining / state.timerTotal) * 100 : 0;
+  const progress = state.timerTotal > 0 ? 1 - (state.timerRemaining / state.timerTotal) : 1;
   bar.style.width = pct + '%';
   text.textContent = Math.ceil(state.timerRemaining);
+  applyPosterVisualProgress(progress);
 }
 
 function togglePause() {
@@ -675,22 +748,57 @@ function togglePause() {
   state.timerPaused = !state.timerPaused;
   const btn = document.getElementById('btn-pause');
   if (state.timerPaused) {
-    btn.textContent = '▶';
+    btn.textContent = 'Үргэлжлүүлэх';
     btn.classList.add('paused');
     document.getElementById('play-audio')?.pause();
     document.getElementById('play-video')?.pause();
+    state.audioCtx?.suspend().catch(() => {});
   } else {
-    btn.textContent = '⏸';
+    btn.textContent = 'Түр зогсоох';
     btn.classList.remove('paused');
     document.getElementById('play-audio')?.play().catch(() => {});
     document.getElementById('play-video')?.play().catch(() => {});
+    state.audioCtx?.resume().catch(() => {});
   }
+}
+
+async function playReverseAudio(src) {
+  try {
+    stopReversePlayback();
+    if (!state.audioCtx) {
+      state.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    await state.audioCtx.resume();
+    const arrayBuffer = await fetch(src).then(r => r.arrayBuffer());
+    const decoded = await state.audioCtx.decodeAudioData(arrayBuffer.slice(0));
+    const reversed = state.audioCtx.createBuffer(decoded.numberOfChannels, decoded.length, decoded.sampleRate);
+    for (let c = 0; c < decoded.numberOfChannels; c++) {
+      const from = decoded.getChannelData(c);
+      const to = reversed.getChannelData(c);
+      for (let i = 0, j = from.length - 1; i < from.length; i++, j--) to[i] = from[j];
+    }
+    const source = state.audioCtx.createBufferSource();
+    source.buffer = reversed;
+    source.connect(state.audioCtx.destination);
+    source.start(0);
+    state.reverseSource = source;
+  } catch {
+    const hint = document.getElementById('reverse-hint');
+    if (hint) hint.textContent = 'Reverse audio-г тоглуулахад алдаа гарлаа.';
+  }
+}
+
+function stopReversePlayback() {
+  if (!state.reverseSource) return;
+  try { state.reverseSource.stop(0); } catch {}
+  try { state.reverseSource.disconnect(); } catch {}
+  state.reverseSource = null;
 }
 
 function resetPauseUI() {
   state.timerPaused = false;
   const btn = document.getElementById('btn-pause');
-  btn.textContent = '⏸';
+  btn.textContent = 'Түр зогсоох';
   btn.classList.remove('paused');
 }
 
@@ -712,7 +820,31 @@ function revealAnswer(q) {
   revealAnswerEl.textContent = q.answerText;
   revealExplanation.textContent = q.explanation || '';
   reveal.classList.remove('hidden');
+  applyPosterVisualProgress(1);
   updateNavButtons();
+}
+
+function applyPosterVisualProgress(progress) {
+  const q = state.currentQuestion;
+  const img = document.getElementById('question-image');
+  const fx = document.getElementById('poster-fx');
+  if (!q || img.classList.contains('hidden')) return;
+
+  const p = Math.max(0, Math.min(1, progress));
+  img.classList.remove('poster-blur', 'poster-zoom');
+  img.style.filter = '';
+  img.style.transform = '';
+  fx.classList.add('hidden');
+  fx.classList.remove('smoke');
+  fx.style.opacity = '0';
+
+  if (q.type === 'smoke-reveal') {
+  
+    const blurPx = (1 - p) * 36;
+    const dim = 0.45 + 0.55 * p;
+    const contrast = 0.75 + 0.25 * p;
+    img.style.filter = `blur(${blurPx.toFixed(2)}px) brightness(${dim.toFixed(3)}) contrast(${contrast.toFixed(3)})`;
+  }
 }
 
 function prevQuestion() {
@@ -732,9 +864,11 @@ function nextQuestion() {
 function finishGame() {
   clearTimers();
   document.getElementById('player-game').classList.add('hidden');
-  document.getElementById('player-done').classList.remove('hidden');
-  document.getElementById('done-summary').textContent =
-    `"${state.playingQuiz.title}" – ${state.playingQuiz.questions.length} асуулт`;
+  document.getElementById('player-intro').classList.add('hidden');
+  document.getElementById('player-done').classList.add('hidden');
+  state.playingQuiz = null;
+  state.playIndex = 0;
+  showView('home');
 }
 
 function clearTimerInterval() {
@@ -748,8 +882,14 @@ function clearTimers() {
 // ── Init ─────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', async () => {
-  await migrateFromLocalStorage();
-  await migrateQuoteQuizzes();
+  try {
+    await migrateFromLocalStorage();
+    await migrateQuoteQuizzes();
+    await migratePosterFxTypes();
+  } catch (err) {
+    console.error(err);
+    alert(err?.message || 'DB холболтын алдаа гарлаа. Supabase тохиргоогоо шалгана уу.');
+  }
   getGuestName();
   renderHome();
 
