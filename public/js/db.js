@@ -1,5 +1,5 @@
 const SUPABASE_CONFIG = window.__SUPABASE_CONFIG__ || {};
-const SUPABASE_URL = SUPABASE_CONFIG.url;
+let SUPABASE_URL = SUPABASE_CONFIG.url;
 const SUPABASE_ANON_KEY = SUPABASE_CONFIG.anonKey;
 const MEDIA_BUCKET = SUPABASE_CONFIG.mediaBucket || 'quiz-media';
 const AUTH_KEY = 'quiz-battle-authenticated';
@@ -8,7 +8,21 @@ const SUPPORTED_MEDIA_PREFIXES = ['image/', 'audio/', 'video/'];
 let supabaseClient = null;
 let currentUserId = null;
 
+function normalizeSupabaseUrl(raw) {
+  const v = String(raw || '').trim();
+  if (!v) return v;
+  try {
+    const u = new URL(v);
+    // Many people accidentally paste Data API URLs like ".../rest/v1" or ".../auth/v1".
+    // Supabase JS expects the project origin (https://<ref>.supabase.co).
+    return u.origin;
+  } catch {
+    return v.replace(/\/+$/, '');
+  }
+}
+
 function ensureConfig() {
+  SUPABASE_URL = normalizeSupabaseUrl(SUPABASE_URL);
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY || SUPABASE_URL.includes('YOUR_PROJECT_REF') || SUPABASE_ANON_KEY.includes('YOUR_SUPABASE_ANON_KEY')) {
     throw new Error('Supabase тохиргоо дутуу байна. public/js/config.js дээр url болон anonKey-гээ оруулна уу.');
   }
