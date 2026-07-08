@@ -16,5 +16,5 @@
 
 - This app is fully client-side. Do **not** put service role key in client files.
 - `anonKey` is safe to expose in browser.
-- User data isolation is enforced by RLS policies in `supabase/schema.sql`.
+- This project is configured as a **shared quiz library** (everyone can read/write quizzes).
 - Runtime config is delivered from `/js/config.js` using server environment variables.

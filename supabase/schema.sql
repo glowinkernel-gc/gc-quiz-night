@@ -4,7 +4,7 @@ create extension if not exists "pgcrypto";
 -- 2) Quiz table
 create table if not exists public.quizzes (
   id text primary key,
-  user_id uuid not null,
+  user_id uuid,
   title text not null,
   category_type text not null,
   author text not null default 'Guest',
@@ -18,27 +18,28 @@ create index if not exists quizzes_user_id_idx on public.quizzes(user_id);
 -- 3) Enable Row Level Security
 alter table public.quizzes enable row level security;
 
--- 4) Per-user access policies
-drop policy if exists "quizzes_select_own" on public.quizzes;
-create policy "quizzes_select_own"
+-- 4) Shared library policies
+-- Anyone (including anonymous auth users) can read/write quizzes.
+drop policy if exists "quizzes_select_all" on public.quizzes;
+create policy "quizzes_select_all"
 on public.quizzes for select
-using (auth.uid() = user_id);
+using (true);
 
-drop policy if exists "quizzes_insert_own" on public.quizzes;
-create policy "quizzes_insert_own"
+drop policy if exists "quizzes_insert_all" on public.quizzes;
+create policy "quizzes_insert_all"
 on public.quizzes for insert
-with check (auth.uid() = user_id);
+with check (true);
 
-drop policy if exists "quizzes_update_own" on public.quizzes;
-create policy "quizzes_update_own"
+drop policy if exists "quizzes_update_all" on public.quizzes;
+create policy "quizzes_update_all"
 on public.quizzes for update
-using (auth.uid() = user_id)
-with check (auth.uid() = user_id);
+using (true)
+with check (true);
 
-drop policy if exists "quizzes_delete_own" on public.quizzes;
-create policy "quizzes_delete_own"
+drop policy if exists "quizzes_delete_all" on public.quizzes;
+create policy "quizzes_delete_all"
 on public.quizzes for delete
-using (auth.uid() = user_id);
+using (true);
 
 -- 5) Storage bucket (run in SQL editor once)
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)

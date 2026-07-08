@@ -109,7 +109,7 @@ function toDbQuiz(row) {
 function toRowQuiz(quiz, userId) {
   return {
     id: quiz.id,
-    user_id: userId,
+    user_id: userId || null,
     title: quiz.title,
     category_type: quiz.categoryType,
     questions: quiz.questions || [],
@@ -137,12 +137,10 @@ async function dbDelete(store, id) {
 async function dbGet(store, id) {
   if (store !== 'quizzes') throw new Error('Unsupported store: ' + store);
   const sb = getSupabase();
-  const userId = await ensureAuth();
   const { data, error } = await sb
     .from('quizzes')
     .select('*')
     .eq('id', id)
-    .eq('user_id', userId)
     .maybeSingle();
 
   if (error) throw error;
@@ -187,11 +185,9 @@ async function deleteMedia(id) {
 
 async function getAllQuizzes() {
   const sb = getSupabase();
-  const userId = await ensureAuth();
   const { data, error } = await sb
     .from('quizzes')
     .select('*')
-    .eq('user_id', userId)
     .order('created_at', { ascending: false });
 
   if (error) throw error;
@@ -217,8 +213,8 @@ async function deleteQuizById(id) {
   }
 
   const sb = getSupabase();
-  const userId = await ensureAuth();
-  const { error } = await sb.from('quizzes').delete().eq('id', id).eq('user_id', userId);
+  await ensureAuth();
+  const { error } = await sb.from('quizzes').delete().eq('id', id);
   if (error) throw error;
 }
 
