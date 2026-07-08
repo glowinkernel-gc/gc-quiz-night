@@ -1,0 +1,11 @@
+{
+  "name": "quiz-battle",
+  "version": "1.0.0",
+  "description": "Quiz presentation app with timer and answer reveal",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0"
+  }
+}
