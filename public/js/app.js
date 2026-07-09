@@ -1,7 +1,7 @@
 const GUEST_KEY = 'quiz-battle-guest';
 
 const QUIZ_TYPES = {
-  'movie-poster': {
+/*  'movie-poster': {
     label: 'Кино таавар',
     icon: '🎬',
     desc: 'Киног poster зургаар таах',
@@ -16,26 +16,34 @@ const QUIZ_TYPES = {
     defaultQuestion: 'Зурган дээрх дуучин хэн бэ?',
     legacyTypes: ['blur-poster'],
   },
-  music: {
+*/  music: {
     label: 'Аяыг таах',
     icon: '🎵',
     desc: 'Дууны аяыг сонсоод нэрийг таах',
     color: '#1368ce',
     defaultQuestion: 'Энэ дууны нэр юу вэ?',
   },
-  'reverse-audio': {
+  /*'reverse-audio': {
     label: 'Урвуу таавар',
     icon: '🔁',
     desc: 'Урвуу болгосон дууг таана',
     color: '#00b894',
     defaultQuestion: 'Урвуу дууны нэр юу вэ?',
   },
-  'quote-video': {
+  */'quote-video': {
     label: 'Ишлэлт таавар',
     icon: '🎥',
     desc: 'Ишлэлийг уншаад киноны нэрийг таана',
     color: '#ffa502',
     defaultQuestion: 'Энэ ишлэл аль киноных вэ?',
+    legacyTypes: ['quote'],
+  },
+  'quote-video': {
+    label: 'Уншиж дууны нэр таах',
+    icon: '🎥',
+    desc: 'Баг бүрээс нэг хүн гарч ирнэ',
+    color: '#ffa502',
+    defaultQuestion: 'Golomt Capital',
     legacyTypes: ['quote'],
   },
   'emoji-movie': {
