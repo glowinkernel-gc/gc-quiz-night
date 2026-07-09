@@ -1,3 +1,41 @@
+const PASSWORD = "963852741";
+
+const loginScreen = document.getElementById("login-screen");
+const app = document.getElementById("app");
+const loginBtn = document.getElementById("login-btn");
+const passwordInput = document.getElementById("login-password");
+const loginError = document.getElementById("login-error");
+
+// өмнө нь зөв нэвтэрсэн эсэх
+if(sessionStorage.getItem("loggedIn") === "true"){
+    loginScreen.style.display = "none";
+    app.style.display = "block";
+}
+
+loginBtn.addEventListener("click", ()=>{
+
+    if(passwordInput.value === PASSWORD){
+
+        sessionStorage.setItem("loggedIn","true");
+
+        loginScreen.style.display = "none";
+        app.style.display = "block";
+
+    }else{
+
+        loginError.textContent = "Нууц үг буруу байна.";
+        passwordInput.value = "";
+    }
+
+});
+
+passwordInput.addEventListener("keypress",(e)=>{
+    if(e.key==="Enter"){
+        loginBtn.click();
+    }
+});
+
+/* LOGIN heseg*/
 const GUEST_KEY = 'quiz-battle-guest';
 
 const QUIZ_TYPES = {
@@ -44,7 +82,7 @@ const QUIZ_TYPES = {
     desc: 'Баг бүрээс нэг хүн гарч ирнэ',
     color: '#ffa502',
     defaultQuestion: 'Golomt Capital',
-    legacyTypes: ['#'],
+    //egacyTypes: ['#'],
   },
   'emoji-movie': {
     label: 'Киног эможигоор таах',

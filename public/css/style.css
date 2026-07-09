@@ -912,3 +912,37 @@ body::after {
     padding-top: 4.5rem;
   }
 }
+
+/* login heseg*/
+.login-screen{
+    position:fixed;
+    inset:0;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:#08111d;
+    z-index:9999;
+}
+
+.login-card{
+    width:360px;
+    background:#fff;
+    padding:30px;
+    border-radius:12px;
+    text-align:center;
+    box-shadow:0 10px 30px rgba(0,0,0,.3);
+}
+
+.login-card input{
+    width:100%;
+    padding:12px;
+    margin:20px 0;
+    font-size:16px;
+    box-sizing:border-box;
+}
+
+.login-error{
+    color:red;
+    margin-top:10px;
+    min-height:20px;
+}
