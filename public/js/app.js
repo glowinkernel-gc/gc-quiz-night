@@ -38,7 +38,7 @@ const QUIZ_TYPES = {
     defaultQuestion: 'Энэ ишлэл аль киноных вэ?',
     legacyTypes: ['quote'],
   },
-  'quote-video': {
+  'reverse': {
     label: 'Уншиж дууны нэр таах',
     icon: '🎥',
     desc: 'Баг бүрээс нэг хүн гарч ирнэ',
