@@ -44,7 +44,7 @@ const QUIZ_TYPES = {
     desc: 'Баг бүрээс нэг хүн гарч ирнэ',
     color: '#ffa502',
     defaultQuestion: 'Golomt Capital',
-    legacyTypes: ['quote'],
+    legacyTypes: ['#'],
   },
   'emoji-movie': {
     label: 'Киног эможигоор таах',
